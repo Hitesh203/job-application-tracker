@@ -3,6 +3,9 @@ import os
 from fastapi import FastAPI, HTTPException
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
+from contextlib import asynccontextmanager
+from database import Base, engine
+import models
 
 database_url = os.getenv("DATABASE_URL")
 
@@ -13,11 +16,18 @@ engine = create_engine(
     database_url,
     pool_pre_ping= True,
 )
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)
+    yield
+
 #create the application instance
 app = FastAPI(
     title = "Job Application Tracker API",
     description = "An API to manage and track job applications.",
-    version = "0.2.0",
+    version = "0.3.0",
+    lifespan = lifespan,
 )
 # @app.get("/") registers an HTTP GET route for the root URL.
 @app.get("/")
